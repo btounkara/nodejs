@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Todolist</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        
+        <style>
+        	h1 {
+        		text-align: center;
+        	}
+
+        	.container-fluid {
+        		margin-bottom: 30px;
+        	}
+
+        	.delete {
+        		color : red;
+        		cursor : pointer;
+        	}
+
+        	.arrival {
+        		font-style: italic;
+        	}
+
+        	.todolist, .history {
+        		max-height: 300px;
+    			overflow-y: auto;
+        	}
+
+        	.row {
+        		margin-bottom: 1rem;
+        	}
+    	</style>
+    </head>
+ 
+    <body>
+
+        <div class="container-fluid">
+    		<h1>Synchronized todo list !</h1>
+        </div>
+
+        <div class="container-fluid">
+			<div class="row">
+    			<div class="col-sm">
+					<div class="row">
+    					<div class="col-sm">
+							<div class="input-group mb-3">
+							  <input id='newValue' type="text" class="form-control" placeholder="Add a new value" aria-label="Add a new value" aria-describedby="addValue">
+							  <div class="input-group-append">
+							    <button id="addValue" class="btn btn-outline-dark" type="button">Add</button>
+							  </div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+    					<div class="col-sm">
+							<ul class="list-group todolist">
+							</ul>
+						</div>
+					</div>
+				</div>
+				
+    			<div class="col-sm">
+					<h3><u>History</u></h3>
+					<div class="history">
+					</div>
+				</div>
+			</div>
+        </div>
+		
+		<script src="http://code.jquery.com/jquery-3.3.1.js"></script>
+        
+        <script src="/socket.io/socket.io.js"></script>
+      
+        <script type="text/javascript">
+        	$(document).ready(() => {
+        		// Event triggered when deleting a value
+    			$('.todolist').on('click', 'li > .delete', function() {
+    				// Retrieve the index of the item which we have to delete
+    				const index = $(this).data('index');
+				
+					// Send the event to the server
+                	socket_todo.emit('operation_on_todolist', { 
+                		type : 'Deleting', value : index
+                	});
+
+    			});
+
+	            // Event triggered when adding a new value
+	            $('#addValue').click(function () {
+	            	const $newValue = $('#newValue');
+	            	const newValue = $newValue.val().trim()
+	            	if(newValue){
+	            		// Send the event to the server
+	                	socket_todo.emit('operation_on_todolist', { 
+	                		type : 'Adding', value : newValue
+	                	});
+
+	                	// Reinitiate the value in the UI
+	            		$newValue.val('');
+	            	} else {
+	            		alert('Please write something before adding !');
+	            	}
+	            });
+
+	            // Event triggered when entering key enter
+	            $('#newValue').keypress(function (e) {
+					const key = e.which;
+					if(key == 13) {
+					    $('#addValue').click();
+					}
+				});
+
+	        	const url = location.origin + '/todo';
+	        	console.log(url);
+	        	
+	        	// Connexion to server
+	            const socket_todo = io.connect(url);
+				
+				// Asking the visitor its username ...
+	            let username = prompt('What is your username ?') || 'John Doe';
+	            document.title = `${username} - ${document.title}`;
+
+	            // Sends the event "new_arrival"
+	            console.log(username);
+	            socket_todo.emit('new_arrival', username);
+
+	            // Affiche le message de confirmation de connexion
+	            socket_todo.on('confirm_connection', (data) => {
+	    			// Updates the content of the todolist
+					updateTodolist(data.todolist);
+	            	// Displays a message to the user
+	            	alert(data.message);
+	            });
+
+	            // Updating the history
+	            socket_todo.on('client_arrival', function(message) {
+	            	updateHistory(message);
+	            });
+
+	            // Updating the todolist and the history
+	            socket_todo.on('update_todolist', function(data) {
+	            	console.log('dataaaa');
+	            	let {todolist, history} = data;
+
+	            	updateTodolist(todolist);
+	            	updateHistory(history);
+	            });
+        	});
+
+        	/**
+        	* Updates the todolist in the UI
+        	* @param todolist : todolist
+        	*/
+        	function updateTodolist(todolist){
+        		const $ul = $('.todolist');
+        		// Removes the content of the todolist
+        		$ul.empty();
+        		// Writes the content of the todolist
+        		todolist.forEach(function(value, index){
+					$ul.append(`<li class="list-group-item list-group-item-action"><span class="badge delete" data-index="${index}">✘</span>${value}</li>`);;
+        		});
+        	}
+
+			/**
+        	* Updates the history in the UI
+        	* @param newLine : the line to add in the history
+        	*/
+        	function updateHistory(newLine){
+            	$('.history').append(`<p><span class='arrival'>${newLine}</span></p>`);
+        	}
+        </script>
+    </body>
+</html>
