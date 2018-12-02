@@ -1,6 +1,5 @@
 // Loading libs
 var assert = require('assert');
-var bodyParser = require('body-parser');
 var cookieSession = require('cookie-session');
 var ent = require('ent'); // To escape html scripting
 var express = require('express');
@@ -16,11 +15,8 @@ const namespace = '/todo';
 // Some values to test
 let todolist = ['This', 'is', 'a', 'test'];
 
-// Initiates the retrieval of POST's params
-app.use(bodyParser.json())
-  .use(bodyParser.urlencoded({ extended: true }))
 // Initiates session's variables
-  .use(cookieSession({secret: secret}));
+app.use(cookieSession({secret: secret}));
 
 // Retrieves the todolist
 app.get('/', (req, res) => {
@@ -62,7 +58,7 @@ io.of(namespace).on('connection', function (socket) {
       socket.handshake.session.username = ent.encode(username);
       console.log(`Connection of ${username}`);
 
-      // Envoi d'un message de confirmation de connection
+      // Sends a confirmation message 
       socket.emit('confirm_connection', {
         message : `Welcolme ${socket.handshake.session.username} ! You're online !`,
         todolist : todolist
@@ -73,7 +69,7 @@ io.of(namespace).on('connection', function (socket) {
       socket.broadcast.emit('client_arrival', `${socket.handshake.session.username} is now online !`);
     });
     
-    // Dès qu'on reçoit un "update_todolist" d'un client, on traite l'information et on la diffuse
+    // As soon as we receive an "update_todolist" from a client, we process the information
     socket.on('operation_on_todolist', function (data) {
       let {type, value} = data;
 
@@ -90,7 +86,7 @@ io.of(namespace).on('connection', function (socket) {
         // Deleting a value in the todolist
         const index = parseInt(value, 10);
 
-        // Veriies that we are trying to remove an index which exists
+        // Verifies that we are trying to remove an index which exists
         assert(index < todolist.length);
         message = `Deleting of  "${todolist[index]}" from the todolist by ${socket.handshake.session.username} !`;
 

@@ -24,7 +24,7 @@
         	}
 
         	.todolist, .history {
-        		max-height: 300px;
+        		max-height: 400px;
     			overflow-y: auto;
         	}
 
@@ -91,7 +91,7 @@
 	            // Event triggered when adding a new value
 	            $('#addValue').click(function () {
 	            	const $newValue = $('#newValue');
-	            	const newValue = $newValue.val().trim()
+	            	const newValue = $newValue.val().trim();
 	            	if(newValue){
 	            		// Send the event to the server
 	                	socket_todo.emit('operation_on_todolist', { 
@@ -116,7 +116,7 @@
 	        	const url = location.origin + '/todo';
 	        	console.log(url);
 	        	
-	        	// Connexion to server
+	        	// Connection to server
 	            const socket_todo = io.connect(url);
 				
 				// Asking the visitor its username ...
@@ -127,7 +127,6 @@
 	            console.log(username);
 	            socket_todo.emit('new_arrival', username);
 
-	            // Affiche le message de confirmation de connexion
 	            socket_todo.on('confirm_connection', (data) => {
 	    			// Updates the content of the todolist
 					updateTodolist(data.todolist);
